@@ -1,7 +1,7 @@
 {
   "name": "dsh-cost-usage",
   "description": "Provider-agnostic cost tracking plugin for DeepSeek Harness: track LLM API spending per session by configuring per-model token pricing or auto-discovering it from provider endpoints.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "type": "module",
   "main": "lib/index.js",
@@ -33,11 +33,11 @@
     "node": ">=20"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.2",
-    "@deepseek-ai/dsh-session": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-session-projection": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-llm": "^0.1.5-rc.2",
-    "@deepseek-ai/dsh-api-session-controller": "^0.1.5-rc.2"
+    "@deepseek-ai/cordis": "~4.0.4",
+    "@deepseek-ai/dsh-session": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-session-projection": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
+    "@deepseek-ai/dsh-api-session-controller": "0.2.0-rc.2"
   },
   "keywords": [
     "deepseek",
