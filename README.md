@@ -19,16 +19,12 @@ Track LLM API spending per session by configuring per-model token pricing or aut
 
 ### 1. Install the package
 
-```bash
-npm install dsh-cost-usage
-```
-
-Or add it to your DSH profile's `package.json` dependencies and bundle list:
+The plugin is hosted on GitHub. Add it to your DSH profile's `package.json` as a git dependency:
 
 ```json
 {
   "dependencies": {
-    "dsh-cost-usage": "^0.1.0"
+    "dsh-cost-usage": "github:KardDev/cost_display"
   },
   "dsh": {
     "profile": {
@@ -41,6 +37,15 @@ Or add it to your DSH profile's `package.json` dependencies and bundle list:
   }
 }
 ```
+
+Then install:
+
+```bash
+cd /path/to/your/dsh/profile
+pnpm install
+```
+
+> **Note:** If you have forked or cloned this repo locally, you can also reference it with a local path: `"dsh-cost-usage": "file:../path/to/cost_display"`.
 
 ### 2. Configure pricing
 
