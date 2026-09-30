@@ -1,0 +1,33 @@
+- id: dsh-cost-usage
+  name: dsh-cost-usage
+  config:
+    # Default currency symbol for display
+    currency: "$"
+    # Per-model pricing configuration.
+    # Keyed by provider route, then model id.
+    # Prices are per-token in the configured currency.
+    # Omitted models use auto-discovery when the provider endpoint supports it,
+    # or fall back to zero (cost not tracked).
+    pricing:
+      # Example: OpenAI-compatible provider
+      # my-provider:
+      #   deepseek-v4-flash:
+      #     input: 0.000000045
+      #     output: 0.00000009
+      #     cacheRead: 0.000000009
+      #     cacheWrite: 0.000000009
+      #
+      # Example: AWS Bedrock provider
+      # bedrock:
+      #   claude-sonnet-4-20250514:
+      #     input: 0.000003
+      #     output: 0.000015
+      #
+      # The wildcard "*" key sets defaults for all models in that provider:
+      # my-provider:
+      #   "*":
+      #     input: 0.000001
+      #     output: 0.000002
+    # Enable auto-discovery of pricing from provider's /v1/models endpoint
+    # (only works with providers that return pricing in their model listing)
+    autoDiscover: true

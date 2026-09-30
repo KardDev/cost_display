@@ -1,0 +1,164 @@
+# dsh-cost-usage
+
+**Provider-agnostic cost tracking plugin for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH).**
+
+Track LLM API spending per session by configuring per-model token pricing or auto-discovering it from provider endpoints. Works with any provider — OpenAI-compatible APIs, AWS Bedrock, Alibaba Cloud, and more.
+
+## Features
+
+- **Per-session cost tracking** — accumulates costs across the entire session via a `costUsage` session projection
+- **Provider-agnostic** — works with any provider route; just configure pricing per model
+- **Manual pricing configuration** — declare per-token rates in `cordis.patch.yml`
+- **Auto-discovery** — optionally fetch pricing from a provider's `/v1/models` endpoint (many OpenAI-compatible providers return pricing in their model listing)
+- **Wildcard defaults** — set a `"*"` model key to provide fallback pricing for all models in a provider
+- **Session cost UI** — client-side plugin injects a cost pill into the conversation stats area with a clickable breakdown dialog
+- **Per-route breakdown** — see cost split by provider/model
+- **Per-component breakdown** — see input, output, and cache costs separately
+
+## Installation
+
+### 1. Install the package
+
+```bash
+npm install dsh-cost-usage
+```
+
+Or add it to your DSH profile's `package.json` dependencies and bundle list:
+
+```json
+{
+  "dependencies": {
+    "dsh-cost-usage": "^0.1.0"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "dsh-cost-usage"
+      ]
+    }
+  }
+}
+```
+
+### 2. Configure pricing
+
+Add pricing configuration to your `cordis.patch.yml`:
+
+```yaml
+- id: dsh-cost-usage
+  name: dsh-cost-usage
+  config:
+    # Currency symbol for display (default: $)
+    currency: "$"
+
+    # Enable auto-discovery of pricing from provider /v1/models endpoints
+    autoDiscover: true
+
+    # Per-model pricing configuration
+    # Keyed by provider route, then model id
+    pricing:
+      my-openai-provider:
+        # Per-model pricing
+        gpt-4o:
+          input: 0.0000025
+          output: 0.00001
+        gpt-4o-mini:
+          input: 0.00000015
+          output: 0.0000006
+
+      my-aws-bedrock:
+        # Wildcard "*" provides defaults for all models in this provider
+        "*":
+          input: 0.000003
+          output: 0.000015
+        # Specific model overrides the wildcard
+        claude-sonnet-4-20250514:
+          input: 0.000003
+          output: 0.000015
+```
+
+### 3. Restart DSH
+
+The plugin activates on next startup. The `costUsage` projection will begin accumulating costs from that point forward.
+
+## Usage
+
+Once installed and configured:
+
+1. **Cost pill** — a small cost indicator appears next to the token usage stats in the conversation view, showing the current session's total cost
+2. **Click for details** — click the cost pill to open a breakdown dialog showing:
+   - Cost per provider/model route
+   - Cost by component (input, output, cache read, cache write)
+   - Session total
+
+## Configuration Reference
+
+### Plugin Configuration (`cordis.patch.yml`)
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `currency` | string | `"$"` | Currency symbol for display |
+| `autoDiscover` | boolean | `true` | Whether to attempt auto-discovery of pricing from provider `/v1/models` endpoints |
+| `pricing` | object | `{}` | Per-model pricing rates, keyed by provider route → model id |
+
+### Pricing Entry
+
+Each pricing entry supports:
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `input` | number | `0` | Cost per input token |
+| `output` | number | `0` | Cost per output token |
+| `cacheRead` | number | `0` | Cost per cache-read token |
+| `cacheWrite` | number | `0` | Cost per cache-write token |
+
+A `"*"` model key sets default pricing for all models under that provider. Specific model entries override the wildcard.
+
+## How It Works
+
+The plugin consists of two parts:
+
+### Server-side (`lib/index.js`)
+
+A Cordis plugin that:
+
+1. Registers a `costUsage` session projection on `ctx.sessionProjections`
+2. Listens to `assistant/message` events in the session log
+3. Reads the provider, model, and token usage from each event
+4. Looks up the configured pricing for that provider/model pair
+5. Accumulates costs session-wide, per-route, and per-turn
+6. Exposes the accumulated data through the standard projection seam
+
+### Client-side (`lib/client.js`)
+
+A ModuleLoader browser bundle that:
+
+1. Connects to the session controller's projection value store
+2. Subscribes to `costUsage` projection updates
+3. Injects a cost pill into the existing stats display
+4. Provides a clickable breakdown dialog
+
+## Plugin API
+
+Other plugins can access cost data through the Cordis context:
+
+```typescript
+// On the server side
+const costUsage = ctx.get('costUsage');
+// costUsage.pricing — the PricingRegistry instance
+// costUsage.projectionKey — 'costUsage'
+
+// Read current projection state via the session projection system
+const projection = ctx.sessionProjections.read('costUsage');
+// projection.totalCost, projection.totalInputCost, etc.
+```
+
+## License
+
+MIT
+
+## Contributing
+
+Contributions welcome! This plugin aims to be provider-agnostic and community-driven.
