@@ -20,7 +20,9 @@
     },
     "client": {
       "platform": "web",
-      "inject": []
+      "inject": [
+        "@deepseek-ai/dsh-api-session-controller"
+      ]
     }
   },
   "files": [
