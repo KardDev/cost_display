@@ -2,14 +2,13 @@
 
 **Provider-agnostic cost tracking plugin for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH).**
 
-Track LLM API spending per session by configuring per-model token pricing or auto-discovering it from provider endpoints. Works with any provider — OpenAI-compatible APIs, AWS Bedrock, Alibaba Cloud, and more.
+Track LLM API spending per session by configuring per-model token pricing you declare in your profile configuration. Works with any provider — OpenAI-compatible APIs, AWS Bedrock, Alibaba Cloud, and more.
 
 ## Features
 
 - **Per-session cost tracking** — accumulates costs across the entire session via a `costUsage` session projection
 - **Provider-agnostic** — works with any provider route; just configure pricing per model
 - **Manual pricing configuration** — declare per-token rates in `cordis.patch.yml`
-- **Auto-discovery** — optionally fetch pricing from a provider's `/v1/models` endpoint (many OpenAI-compatible providers return pricing in their model listing)
 - **Wildcard defaults** — set a `"*"` model key to provide fallback pricing for all models in a provider
 - **Session cost UI** — client-side plugin injects a cost pill into the conversation stats area with a clickable breakdown dialog
 - **Per-route breakdown** — see cost split by provider/model
@@ -45,7 +44,7 @@ cd /path/to/your/dsh/profile
 pnpm install
 ```
 
-> **Note:** If you have forked or cloned this repo locally, you can also reference it with a local path: `"dsh-cost-usage": "file:../path/to/cost_display"`.
+> **Note:** For a local clone, prefer `dsh plugin --profile <name> add <path-to-cost_display>`: it links the directory, so source edits are live. A `"file:"` dependency is copied at install time and silently goes stale when you edit the source.
 
 ### 2. Configure pricing
 
@@ -57,9 +56,6 @@ Add pricing configuration to your `cordis.patch.yml`:
   config:
     # Currency symbol for display (default: $)
     currency: "$"
-
-    # Enable auto-discovery of pricing from provider /v1/models endpoints
-    autoDiscover: true
 
     # Per-model pricing configuration
     # Keyed by provider route, then model id
@@ -105,7 +101,6 @@ Once installed and configured:
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `currency` | string | `"$"` | Currency symbol for display |
-| `autoDiscover` | boolean | `true` | Whether to attempt auto-discovery of pricing from provider `/v1/models` endpoints |
 | `pricing` | object | `{}` | Per-model pricing rates, keyed by provider route → model id |
 
 ### Pricing Entry
@@ -155,9 +150,12 @@ const costUsage = ctx.get('costUsage');
 // costUsage.pricing — the PricingRegistry instance
 // costUsage.projectionKey — 'costUsage'
 
-// Read current projection state via the session projection system
-const projection = ctx.sessionProjections.read('costUsage');
-// projection.totalCost, projection.totalInputCost, etc.
+// Read current projection state via the session projection system.
+// stateOf returns the raw folded state (or undefined if the key is not registered);
+// snapshot(session, [keys]) returns { asOfSeq, values } with schema-validated views.
+const state = ctx.sessionProjections.stateOf(session, 'costUsage');
+const { values } = ctx.sessionProjections.snapshot(session, ['costUsage']);
+// values.costUsage.totalCost, values.costUsage.totalInputCost, etc.
 ```
 
 ## License

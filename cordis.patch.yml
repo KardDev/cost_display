@@ -4,8 +4,6 @@
       config:
         # Currency symbol for display
         currency: "$"
-        # Enable auto-discovery of pricing from provider /v1/models endpoints
-        autoDiscover: true
         # Per-model pricing configuration (users override this in their profile)
         # See README.md for examples
         pricing: {}
