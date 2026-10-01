@@ -10,9 +10,10 @@ Track LLM API spending per session by configuring per-model token pricing you de
 - **Provider-agnostic** — works with any provider route; just configure pricing per model
 - **Manual pricing configuration** — declare per-token rates in `cordis.patch.yml`
 - **Wildcard defaults** — set a `"*"` model key to provide fallback pricing for all models in a provider
-- **Session cost UI** — client-side plugin injects a cost pill into the conversation stats area with a clickable breakdown dialog
+- **Session cost UI** — the client half registers a cost pill beside the context meter with a clickable breakdown dialog
 - **Per-route breakdown** — see cost split by provider/model
 - **Per-component breakdown** — see input, output, and cache costs separately
+- **Manual pricing by design** — unpriced routes report zero cost rather than a guess
 
 ## Installation
 
@@ -44,7 +45,7 @@ cd /path/to/your/dsh/profile
 pnpm install
 ```
 
-> **Note:** For a local clone, prefer `dsh plugin --profile <name> add <path-to-cost_display>`: it links the directory, so source edits are live. A `"file:"` dependency is copied at install time and silently goes stale when you edit the source.
+> **Note:** For a local clone, prefer `dsh plugin --profile <name> add <path-to-cost_display>`: it links the directory, so source edits stay live. A `file:` dependency is copied at install time and silently goes stale when you edit the source.
 
 ### 2. Configure pricing
 
@@ -88,11 +89,13 @@ The plugin activates on next startup. The `costUsage` projection will begin accu
 
 Once installed and configured:
 
-1. **Cost pill** — a small cost indicator appears next to the token usage stats in the conversation view, showing the current session's total cost
+1. **Cost pill** - registers into the `conversation.composer.dock` slot, so it appears in the composer row beside the context meter, showing the current session total cost
 2. **Click for details** — click the cost pill to open a breakdown dialog showing:
    - Cost per provider/model route
    - Cost by component (input, output, cache read, cache write)
    - Session total
+
+   The panel closes on Escape, an outside click, or a window resize.
 
 ## Configuration Reference
 
@@ -137,7 +140,7 @@ A ModuleLoader browser bundle that:
 
 1. Connects to the session controller's projection value store
 2. Subscribes to `costUsage` projection updates
-3. Injects a cost pill into the existing stats display
+3. Renders the cost pill as a `conversation.composer.dock` slot entry beside the context meter
 4. Provides a clickable breakdown dialog
 
 ## Plugin API
@@ -151,7 +154,7 @@ const costUsage = ctx.get('costUsage');
 // costUsage.projectionKey — 'costUsage'
 
 // Read current projection state via the session projection system.
-// stateOf returns the raw folded state (or undefined if the key is not registered);
+// stateOf returns the raw folded state (or undefined when the key is not registered);
 // snapshot(session, [keys]) returns { asOfSeq, values } with schema-validated views.
 const state = ctx.sessionProjections.stateOf(session, 'costUsage');
 const { values } = ctx.sessionProjections.snapshot(session, ['costUsage']);
